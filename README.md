@@ -57,7 +57,9 @@ tool for exporting directory information as excel
 
 0. Open the directory of this tool in cmd
 
-   run commad below:
+   > e.g.) cd d:\folderA\folderB\export-dir-to-excel
+
+   run command below:
 
    ```bat
    npm install
