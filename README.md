@@ -6,7 +6,7 @@ tool for exporting directory information as excel
 
 ---
 
-## ０、何だこれ？
+## ０、何だこれ？ About
 
 本ツールは、以下の機能を提供している： 
 
@@ -20,7 +20,7 @@ tool for exporting directory information as excel
 
 ---
 
-## 1、前提
+## 1、前提 Precondition
 
 1. Git
 
@@ -53,7 +53,7 @@ tool for exporting directory information as excel
 
 ---
 
-## ２、使いかた
+## ２、使いかた Usage
 
 0. Open the directory of this tool in cmd
 
@@ -66,8 +66,10 @@ tool for exporting directory information as excel
    ※run it Only Once !!!
 
 1. Doubly click [run.bat] to start  
+
 2. [Must] Input path of target folder in cmd  
    support &lt;drag & drop>
+
 3. [Optional] Input path for output or press Enter to use default   
 
     so easy?!
@@ -76,7 +78,7 @@ tool for exporting directory information as excel
 
 ---
 
-## ３、そのた
+## ３、そのた Other
 
 補足：
 
