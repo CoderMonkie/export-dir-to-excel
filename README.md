@@ -1,6 +1,8 @@
 # Export Directory To Excel
 
-tool for exporting directory infomation as excel
+tool for exporting directory information as excel
+
+> Written in JavaScript
 
 ---
 
@@ -13,7 +15,8 @@ tool for exporting directory infomation as excel
 
 - ZIP ファイルに対しても中身構造を出力できる
 
-※注：構造階層が深く、ファイルも多い場合を避けてください。
+※注：構造階層が深く、ファイルも多い場合を避けてください。  
+　。。時間かかりすぎるから。。
 
 ---
 
