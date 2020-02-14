@@ -5,27 +5,44 @@ const AdmZip = require('adm-zip');
 
 const regZip = /[^\B]+.zip$/g
 
-// 例：D:\\FolderA\\FolderB\\FolderC
-//    |---------1---------| |---2---|
-
-// 1. Path-of-Parent-Folder
-let targetPrePath = ''
-// 2. Path-of-Target-Folder
-let targetCurrentPath = ''
-
+// start running.
 main()
 
 // --------------------------
 
+/**
+ * Entry method
+ *
+ */
 function main () {
-    checkParams()
+    let { targetPath, outputPath } = checkParams()
+
+    console.log(`
+        /_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        /_/
+        /_/ Processing...    
+        /_/ Pleate wait... 
+        /_/
+        /_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    `)
 
     let dirTree = {}
+    let targetPrePath, targetCurrentPath
     
     try {
-        const targetPath = path.resolve(targetPrePath, targetCurrentPath)
-        const stats = fs.statSync(targetPath)
-        if (!stats.isDirectory()) throw new Error(`invalid target path: ${targetPath}`)
+        // joined with [\]
+        if (targetPath.includes('\\')) {
+            [ targetPrePath, targetCurrentPath ] = devidePath(targetPath, '\\')
+            
+        }
+        // joined with [/]
+        else if (targetPath.includes('/')) {
+            [ targetPrePath, targetCurrentPath ] = devidePath(targetPath, '/')
+        }
+        // disk or invalid path
+        else {
+            [ targetPrePath, targetCurrentPath ] = devidePath(targetPath, '')
+        }
 
         readDirRecursively(targetPrePath, targetCurrentPath, dirTree)
     }
@@ -33,8 +50,7 @@ function main () {
         console.log(err)
         return
     }
-    console.log(dirTree)
-    console.log('------------------')
+    // console.log(dirTree)
 
     let rows = []
     rows.push([path.resolve(targetPrePath, targetCurrentPath)])
@@ -46,29 +62,95 @@ function main () {
         data: rows
     }]
     
-    writeExcel(exportData)
+    writeExcel(exportData, targetCurrentPath, outputPath)
 }
 
 // --------------------------
 
+/**
+ * check for parameters from CLI
+ *
+ * @returns { targetPath, outputPath }
+ */
 function checkParams() {
     let args = process.argv.splice(2)
-    if (args && args.length < 2) throw new Error(`Parameter error: ${args}`)
 
-    targetPrePath =  args[0]
-    targetCurrentPath = args[1]
+    // no parameters recieved
+    if (!args || !args.length) throw new Error(`no-parameter error.\r\nPlease input full path of the target folder.\r\nYou can also specify an output path.`)
 
-    if (!targetCurrentPath) throw new Error(`Parameter error: ${args}`)
+    let targetPath = ''
+    let outputPath = ''
 
-    const fullPath = path.resolve(targetPrePath, targetCurrentPath)
-    try {
-        const stats = fs.statSync(fullPath)
+    try {        
+        // 対象フォルダ
+        targetPath = args[0]
+        const statsTarget = fs.statSync(targetPath)
+        if (!statsTarget.isDirectory()) throw new Error(`invalid target path: ${targetPath}`)
+
+        // 出力先
+        outputPath = (args.length > 1) ? args[1] : __dirname
+        const statsOutPath = fs.statSync(outputPath)
+        if (!statsOutPath.isDirectory()) {
+            console.log(`
+                invalid output path: ${outputPath}
+                using ${__dirname} instead.
+            `)
+            outputPath = __dirname
+        }
     }
     catch(err) {
         throw new Error(err)
     }
+
+    console.log(`
+        /_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+        /_/
+        /_/ Target Folder: ${targetPath}    
+        /_/ Output Path  : ${outputPath}    
+        /_/
+        /_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+    `)
+
+    return { targetPath, outputPath }
 }
 
+/**
+ * devide path for current folder name
+ *
+ * @param {String} targetPath
+ * @param {String | null} seperator
+ * @returns
+ */
+function devidePath (targetPath, seperator) {
+    let targetPrePath
+    let targetCurrentPath
+
+    // [\]または[/]で分割する場合
+    if (seperator) {
+        let arr = targetPath.split(seperator)
+        
+        targetCurrentPath = arr.pop()
+        while (targetCurrentPath === '') {
+            targetCurrentPath = arr.pop()
+        }
+        targetPrePath = arr.join(seperator)  
+    }
+    // disk の場合
+    else {
+        targetPrePath = ''
+        targetCurrentPath = targetPath
+    }
+
+    return [targetPrePath, targetCurrentPath]
+}
+
+/**
+ * read directory recursively
+ *
+ * @param {String} prePath
+ * @param {String} currentPath
+ * @param {Object} dirTree
+ */
 function readDirRecursively (prePath, currentPath, dirTree) {
     const fullPath = path.resolve(prePath, currentPath)
 
@@ -85,12 +167,11 @@ function readDirRecursively (prePath, currentPath, dirTree) {
     }
     // .zip file
     else if(stats.isFile() && regZip.test(fullPath)) {
-        // TODO
         const zip = new AdmZip(fullPath);
         const zipEntries = zip.getEntries();
         let zipDirTree = dirTree[currentPath] = {}
         
-        zipEntries.forEach(function(zipEntry, i, arr) {
+        zipEntries.forEach(function(zipEntry) {
             let fullPath = zipEntry.entryName.toString()
             let arrPath = fullPath.split('/')
             let rootObj = zipDirTree
@@ -126,6 +207,13 @@ function readDirRecursively (prePath, currentPath, dirTree) {
     }
 }
 
+/**
+ * create data for excel
+ *
+ * @param {Object} obj
+ * @param {Array} rows
+ * @param {String} [indents='']
+ */
 function createData(obj, rows, indents = '') {
     for(item in obj) {
         let cols = []
@@ -141,14 +229,21 @@ function createData(obj, rows, indents = '') {
             cols.push(obj[item])
             rows.push(cols)
         }
-        console.log(cols)
+        // console.log(cols)
     }
 }
 
-function writeExcel(data) {
+/**
+ * create excel and write data
+ *
+ * @param {Array} data
+ * @param {String} targetCurrentPath
+ * @param {String} outputPath
+ */
+function writeExcel(data, targetCurrentPath, outputPath) {
     const buffer = xlsx.build(data);
     const fileName = `${targetCurrentPath}.xlsx`
-    const fileFullPath = path.resolve(targetPrePath, targetCurrentPath, fileName)
+    const fileFullPath = path.resolve(outputPath, fileName)
 
     // write excel file
     fs.writeFile(fileName, buffer, function(err) {
