@@ -3,7 +3,7 @@ const path = require('path')
 const xlsx = require('node-xlsx');
 const AdmZip = require('adm-zip');
 
-const regZip = /[^\B]+.zip$/g
+const regZip = /^.+(?:(\.zip)+)$/ig
 
 // start running.
 main()
