@@ -246,7 +246,7 @@ function writeExcel(data, targetCurrentPath, outputPath) {
     const fileFullPath = path.resolve(outputPath, fileName)
 
     // write excel file
-    fs.writeFile(fileName, buffer, function(err) {
+    fs.writeFile(fileFullPath, buffer, function(err) {
         if (err) {
             console.log("Write failed: " + err + '\r\n-->Please close the file and try it again.');
             throw new Error(err)
